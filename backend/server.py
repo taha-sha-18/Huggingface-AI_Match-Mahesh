@@ -801,7 +801,7 @@ async def cancel_event_attendance(event_id: str, current_user: User = Depends(ge
 
 @api_router.get("/events/matches")
 async def get_event_matches(current_user: User = Depends(get_current_user)):
-    \"\"\"Get AI-matched events for user using HuggingFace embeddings\"\"\"
+    """Get AI-matched events for user using HuggingFace embeddings"""
     if not current_user.value_profile:
         raise HTTPException(status_code=400, detail="Complete value discovery game first")
     
