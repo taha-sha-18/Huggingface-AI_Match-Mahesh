@@ -486,8 +486,8 @@ async def submit_game(submission: GameSubmission, current_user: User = Depends(g
             if value:
                 value_counts[value] += 1
         
-        # Get embeddings for selected words to enhance inference (for future use)
-        selected_words = [s['word'] for s in submission.selections]
+        # Get embeddings for selected words to enhance inference (reserved for future use)
+        # selected_words = [s['word'] for s in submission.selections]
         # words_text = ", ".join(selected_words)  # Reserved for future enhancement
         # user_embedding = get_embedding(words_text)  # Reserved for future enhancement
         
