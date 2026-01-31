@@ -801,23 +801,11 @@ async def cancel_event_attendance(event_id: str, current_user: User = Depends(ge
 
 @api_router.get("/events/matches")
 async def get_event_matches(current_user: User = Depends(get_current_user)):
-    """Get AI-matched events for user using HuggingFace embeddings"""
+    """Get AI-matched events for user"""
     if not current_user.value_profile:
         raise HTTPException(status_code=400, detail="Complete value discovery game first")
     
-    # Generate user profile text for embedding
-    user_text = generate_profile_text(
-        current_user.value_profile,
-        current_user.environment_preferences
-    )
-    
-    # Get user embedding from HuggingFace
-    user_embedding = get_embedding(user_text)
-    if not user_embedding:
-        logger.warning("Could not get user embedding for events")
-        return []
-    
-    # Get all events
+    # Get all events - use simple matching without embeddings
     all_events = await db.events.find({}, {"_id": 0}).to_list(1000)
     
     matches = []
@@ -831,28 +819,19 @@ async def get_event_matches(current_user: User = Depends(get_current_user)):
         if current_user.user_id in event.get('attendees', []):
             continue
         
-        # Generate event profile text
-        event_text = f"{event['name']}. {event['description']}. {event['event_type']} event. " + generate_profile_text(event['value_profile'])
+        # Simple value-based matching
+        user_values = current_user.value_profile
+        event_values = event['value_profile']
+        similarities = []
+        for key in user_values.keys():
+            if key in event_values:
+                diff = abs(user_values[key] - event_values[key])
+                similarity = 1 - diff
+                similarities.append(similarity)
         
-        # Get event embedding
-        event_embedding = get_embedding(event_text)
-        if not event_embedding:
-            continue
+        base_score = (sum(similarities) / len(similarities)) * 100 if similarities else 50
         
-        # Calculate cosine similarity using embeddings
-        similarity = cosine_similarity(user_embedding, event_embedding)
-        base_score = similarity * 100  # Convert to 0-100 scale
-        
-        # Generate match explanation
-        why_matches = f"This {event['event_type']} event aligns with your interests and values. "
-        if current_user.value_profile.get('intellectual', 0.5) > 0.6 and event['value_profile'].get('intellectual', 0.5) > 0.6:
-            why_matches += "You'll enjoy the intellectual aspects. "
-        if current_user.value_profile.get('community_oriented', 0.5) > 0.6:
-            why_matches += "Great opportunity to connect with like-minded people. "
-        
-        friction = None
-        if abs(current_user.value_profile.get('competitive', 0.5) - event['value_profile'].get('competitive', 0.5)) > 0.5:
-            friction = "The competitive nature might not match your preferences."
+        why_matches = f"This {event['event_type']} event aligns with your interests. "
         
         matches.append(EventMatch(
             event_id=event['event_id'],
@@ -862,17 +841,15 @@ async def get_event_matches(current_user: User = Depends(get_current_user)):
             date=event['date'],
             location=event['location'],
             image=event.get('image'),
-            compatibility_score=round(max(0, min(100, base_score)), 1),
-            why_it_matches=why_matches.strip(),
-            possible_friction=friction,
+            compatibility_score=round(base_score, 1),
+            why_it_matches=why_matches,
+            possible_friction=None,
             value_profile=event['value_profile'],
             attendee_count=event.get('attendee_count', 0),
             tags=event.get('tags', [])
         ))
     
-    # Sort by compatibility score
     matches.sort(key=lambda x: x.compatibility_score, reverse=True)
-    
     return matches
 
 # ==================== HEALTH CHECK ====================
