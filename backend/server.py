@@ -195,10 +195,16 @@ def get_embedding(text: str) -> Optional[List[float]]:
         response = requests.post(
             HUGGINGFACE_API_URL,
             headers=headers,
-            json={"inputs": text}
+            json={"inputs": text, "options": {"wait_for_model": True}}
         )
         if response.status_code == 200:
-            return response.json()
+            result = response.json()
+            # Handle both array and nested array responses
+            if isinstance(result, list):
+                if len(result) > 0 and isinstance(result[0], list):
+                    return result[0]  # Return first embedding if nested
+                return result
+            return None
         else:
             logger.error(f"HuggingFace API error: {response.status_code} - {response.text}")
             return None
