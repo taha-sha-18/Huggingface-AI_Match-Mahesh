@@ -1,13 +1,31 @@
-diff --git a/frontend/src/stores/communityStore.ts b/frontend/src/stores/communityStore.ts
-index 2fe8547..7750e70 100644
---- a/frontend/src/stores/communityStore.ts
-+++ b/frontend/src/stores/communityStore.ts
-@@ -5,7 +5,7 @@ import api from '../utils/api';
- interface CommunityState {
-   communities: Community[];
-   matches: CommunityMatch[];
--  myCommun ities: Community[];
-+  myCommunities: Community[];
-   isLoading: boolean;
-   fetchCommunities: () => Promise<void>;
-   fetchMatches: () => Promise<void>;
+diff --git a/frontend/app/(tabs)/home.tsx b/frontend/app/(tabs)/home.tsx
+index cc91346..7363584 100644
+--- a/frontend/app/(tabs)/home.tsx
++++ b/frontend/app/(tabs)/home.tsx
+@@ -127,7 +127,7 @@ export default function HomeScreen() {
+                 {myCommunities.map((community) => (
+                   <TouchableOpacity
+                     key={community.community_id}
+-                    style={styles.myCommu nityCard}
++                    style={styles.myCommunityCard}
+                     onPress={() => Alert.alert(community.name, community.description)}
+                   >
+                     {community.image ? (
+diff --git a/model.patch b/model.patch
+index 4b6203b..e69de29 100644
+--- a/model.patch
++++ b/model.patch
+@@ -1,13 +0,0 @@
+-diff --git a/frontend/src/stores/communityStore.ts b/frontend/src/stores/communityStore.ts
+-index 2fe8547..7750e70 100644
+---- a/frontend/src/stores/communityStore.ts
+-+++ b/frontend/src/stores/communityStore.ts
+-@@ -5,7 +5,7 @@ import api from '../utils/api';
+- interface CommunityState {
+-   communities: Community[];
+-   matches: CommunityMatch[];
+--  myCommun ities: Community[];
+-+  myCommunities: Community[];
+-   isLoading: boolean;
+-   fetchCommunities: () => Promise<void>;
+-   fetchMatches: () => Promise<void>;
