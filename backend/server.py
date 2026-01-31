@@ -738,7 +738,7 @@ async def get_events(current_user: User = Depends(get_current_user)):
 
 @api_router.get("/events/{event_id}")
 async def get_event(event_id: str, current_user: User = Depends(get_current_user)):
-    \"\"\"Get event details\"\"\"
+    """Get event details"""
     event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
