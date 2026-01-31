@@ -5,7 +5,7 @@ import api from '../utils/api';
 interface CommunityState {
   communities: Community[];
   matches: CommunityMatch[];
-  myCommun ities: Community[];
+  myCommunities: Community[];
   isLoading: boolean;
   fetchCommunities: () => Promise<void>;
   fetchMatches: () => Promise<void>;
