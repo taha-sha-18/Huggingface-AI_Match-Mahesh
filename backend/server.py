@@ -746,7 +746,7 @@ async def get_event(event_id: str, current_user: User = Depends(get_current_user
 
 @api_router.post("/events")
 async def create_event(event: EventCreate, current_user: User = Depends(get_current_user)):
-    \"\"\"Create a new event\"\"\"
+    """Create a new event"""
     event_id = f"event_{uuid.uuid4().hex[:12]}"
     
     event_doc = {
