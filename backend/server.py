@@ -733,7 +733,7 @@ async def get_matches(current_user: User = Depends(get_current_user)):
             base_score *= 0.7  # Reduce score for skipped communities
         
         # Generate match explanation
-        why_matches = f"Your values align well with this community's focus. "
+        why_matches = "Your values align well with this community's focus. "
         if current_user.value_profile.get('community_oriented', 0.5) > 0.5 and community['value_profile'].get('community_oriented', 0.5) > 0.5:
             why_matches += "You both value strong community connections. "
         if current_user.value_profile.get('intellectual', 0.5) > 0.5 and community['value_profile'].get('intellectual', 0.5) > 0.5:
