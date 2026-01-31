@@ -642,11 +642,61 @@ async def get_my_communities(current_user: User = Depends(get_current_user)):
 
 # ==================== MATCHING ENDPOINTS ====================
 
+def generate_profile_text(value_profile: Dict[str, float], environment_prefs: Optional[Dict[str, str]] = None) -> str:
+    """Generate descriptive text from value profile for embedding"""
+    texts = []
+    
+    # Value descriptions
+    if value_profile.get('community_oriented', 0) > 0.6:
+        texts.append("highly community-oriented and collaborative")
+    elif value_profile.get('community_oriented', 0) < 0.4:
+        texts.append("independent and self-directed")
+    
+    if value_profile.get('intellectual', 0) > 0.6:
+        texts.append("intellectually focused and analytical")
+    elif value_profile.get('intellectual', 0) < 0.4:
+        texts.append("hands-on and experiential")
+    
+    if value_profile.get('competitive', 0) > 0.6:
+        texts.append("competitive and achievement-oriented")
+    elif value_profile.get('competitive', 0) < 0.4:
+        texts.append("collaborative and supportive")
+    
+    if value_profile.get('structured', 0) > 0.6:
+        texts.append("organized and structured")
+    elif value_profile.get('structured', 0) < 0.4:
+        texts.append("spontaneous and flexible")
+    
+    if value_profile.get('tradition', 0) > 0.6:
+        texts.append("traditional and heritage-focused")
+    elif value_profile.get('tradition', 0) < 0.4:
+        texts.append("innovative and novelty-seeking")
+    
+    # Add environment preferences if available
+    if environment_prefs:
+        texts.append(f"prefers {environment_prefs.get('interaction_style', 'balanced interaction')}")
+        texts.append(f"enjoys {environment_prefs.get('pace', 'balanced')} pace activities")
+    
+    return " ".join(texts)
+
 @api_router.get("/matches")
 async def get_matches(current_user: User = Depends(get_current_user)):
-    """Get AI-matched communities for user"""
+    """Get AI-matched communities for user using HuggingFace embeddings"""
     if not current_user.value_profile:
         raise HTTPException(status_code=400, detail="Complete value discovery game first")
+    
+    # Generate user profile text for embedding
+    user_text = generate_profile_text(
+        current_user.value_profile,
+        current_user.environment_preferences
+    )
+    
+    # Get user embedding from HuggingFace
+    user_embedding = get_embedding(user_text)
+    if not user_embedding:
+        logger.warning("Could not get user embedding, falling back to value comparison")
+        # Fallback to simple value comparison if embedding fails
+        return await get_matches_fallback(current_user)
     
     # Get all communities
     all_communities = await db.communities.find({}, {"_id": 0}).to_list(1000)
@@ -667,34 +717,31 @@ async def get_matches(current_user: User = Depends(get_current_user)):
         if current_user.user_id in community.get('members', []):
             continue
         
-        # Calculate compatibility score
-        user_values = current_user.value_profile
-        comm_values = community['value_profile']
+        # Generate community profile text
+        comm_text = f"{community['name']}. {community['description']}. " + generate_profile_text(community['value_profile'], community.get('environment_settings'))
         
-        # Calculate similarity for each value dimension
-        similarities = []
-        for key in user_values.keys():
-            if key in comm_values:
-                # Calculate absolute difference, then convert to similarity
-                diff = abs(user_values[key] - comm_values[key])
-                similarity = 1 - diff  # Convert difference to similarity
-                similarities.append(similarity)
+        # Get community embedding
+        comm_embedding = get_embedding(comm_text)
+        if not comm_embedding:
+            continue
         
-        base_score = (sum(similarities) / len(similarities)) * 100 if similarities else 50
+        # Calculate cosine similarity using embeddings
+        similarity = cosine_similarity(user_embedding, comm_embedding)
+        base_score = similarity * 100  # Convert to 0-100 scale
         
         # Apply feedback loop adjustments
         if community['community_id'] in skipped_communities:
-            base_score *= 0.8  # Reduce score for skipped communities
+            base_score *= 0.7  # Reduce score for skipped communities
         
         # Generate match explanation
         why_matches = f"Your values align well with this community's focus. "
-        if user_values.get('community_oriented', 0.5) > 0.5 and comm_values.get('community_oriented', 0.5) > 0.5:
+        if current_user.value_profile.get('community_oriented', 0.5) > 0.5 and community['value_profile'].get('community_oriented', 0.5) > 0.5:
             why_matches += "You both value strong community connections. "
-        if user_values.get('intellectual', 0.5) > 0.5 and comm_values.get('intellectual', 0.5) > 0.5:
+        if current_user.value_profile.get('intellectual', 0.5) > 0.5 and community['value_profile'].get('intellectual', 0.5) > 0.5:
             why_matches += "Intellectual engagement is important to both. "
         
         friction = None
-        if abs(user_values.get('structured', 0.5) - comm_values.get('structured', 0.5)) > 0.4:
+        if abs(current_user.value_profile.get('structured', 0.5) - community['value_profile'].get('structured', 0.5)) > 0.4:
             friction = "You may prefer different levels of structure and organization."
         
         matches.append(CommunityMatch(
@@ -702,7 +749,7 @@ async def get_matches(current_user: User = Depends(get_current_user)):
             community_name=community['name'],
             description=community['description'],
             image=community.get('image'),
-            compatibility_score=round(base_score, 1),
+            compatibility_score=round(max(0, min(100, base_score)), 1),
             why_it_matches=why_matches.strip(),
             possible_friction=friction,
             value_profile=community['value_profile'],
@@ -713,6 +760,46 @@ async def get_matches(current_user: User = Depends(get_current_user)):
     # Sort by compatibility score
     matches.sort(key=lambda x: x.compatibility_score, reverse=True)
     
+    return matches
+
+async def get_matches_fallback(current_user: User):
+    """Fallback matching without embeddings"""
+    all_communities = await db.communities.find({}, {"_id": 0}).to_list(1000)
+    user_actions = await db.user_actions.find({"user_id": current_user.user_id}, {"_id": 0}).to_list(1000)
+    skipped_communities = [a['community_id'] for a in user_actions if a['action'] == 'skip']
+    
+    matches = []
+    for community in all_communities:
+        if current_user.user_id in community.get('members', []):
+            continue
+        
+        user_values = current_user.value_profile
+        comm_values = community['value_profile']
+        similarities = []
+        for key in user_values.keys():
+            if key in comm_values:
+                diff = abs(user_values[key] - comm_values[key])
+                similarity = 1 - diff
+                similarities.append(similarity)
+        
+        base_score = (sum(similarities) / len(similarities)) * 100 if similarities else 50
+        if community['community_id'] in skipped_communities:
+            base_score *= 0.8
+        
+        matches.append(CommunityMatch(
+            community_id=community['community_id'],
+            community_name=community['name'],
+            description=community['description'],
+            image=community.get('image'),
+            compatibility_score=round(base_score, 1),
+            why_it_matches="Based on your value profile alignment",
+            possible_friction=None,
+            value_profile=community['value_profile'],
+            environment_settings=community['environment_settings'],
+            member_count=community.get('member_count', 0)
+        ))
+    
+    matches.sort(key=lambda x: x.compatibility_score, reverse=True)
     return matches
 
 # ==================== HEALTH CHECK ====================
