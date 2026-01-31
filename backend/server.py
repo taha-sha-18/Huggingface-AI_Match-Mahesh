@@ -116,6 +116,46 @@ class CommunityMatch(BaseModel):
     environment_settings: Dict[str, str]
     member_count: int
 
+class Event(BaseModel):
+    event_id: str
+    name: str
+    description: str
+    event_type: str  # workshop, meetup, conference, social, etc.
+    date: datetime
+    location: str
+    image: Optional[str] = None
+    creator_id: str
+    created_at: datetime
+    attendees: List[str] = []
+    attendee_count: int = 0
+    value_profile: Dict[str, float]
+    tags: List[str] = []
+
+class EventCreate(BaseModel):
+    name: str
+    description: str
+    event_type: str
+    date: datetime
+    location: str
+    image: Optional[str] = None
+    value_profile: Dict[str, float]
+    tags: List[str] = []
+
+class EventMatch(BaseModel):
+    event_id: str
+    event_name: str
+    description: str
+    event_type: str
+    date: datetime
+    location: str
+    image: Optional[str] = None
+    compatibility_score: float
+    why_it_matches: str
+    possible_friction: Optional[str] = None
+    value_profile: Dict[str, float]
+    attendee_count: int
+    tags: List[str]
+
 # ==================== VALUE DISCOVERY GAME DATA ====================
 
 # 10 core values with representative words for each
