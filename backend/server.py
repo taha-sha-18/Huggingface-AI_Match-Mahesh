@@ -770,7 +770,7 @@ async def create_event(event: EventCreate, current_user: User = Depends(get_curr
 
 @api_router.post("/events/{event_id}/attend")
 async def attend_event(event_id: str, current_user: User = Depends(get_current_user)):
-    \"\"\"Attend an event\"\"\"
+    """Attend an event"""
     event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
