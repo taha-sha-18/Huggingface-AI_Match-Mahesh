@@ -681,85 +681,12 @@ def generate_profile_text(value_profile: Dict[str, float], environment_prefs: Op
 
 @api_router.get("/matches")
 async def get_matches(current_user: User = Depends(get_current_user)):
-    """Get AI-matched communities for user using HuggingFace embeddings"""
+    """Get AI-matched communities for user"""
     if not current_user.value_profile:
         raise HTTPException(status_code=400, detail="Complete value discovery game first")
     
-    # Generate user profile text for embedding
-    user_text = generate_profile_text(
-        current_user.value_profile,
-        current_user.environment_preferences
-    )
-    
-    # Get user embedding from HuggingFace
-    user_embedding = get_embedding(user_text)
-    if not user_embedding:
-        logger.warning("Could not get user embedding, falling back to value comparison")
-        # Fallback to simple value comparison if embedding fails
-        return await get_matches_fallback(current_user)
-    
-    # Get all communities
-    all_communities = await db.communities.find({}, {"_id": 0}).to_list(1000)
-    
-    # Get user's past actions for feedback loop
-    user_actions = await db.user_actions.find(
-        {"user_id": current_user.user_id},
-        {"_id": 0}
-    ).to_list(1000)
-    
-    skipped_communities = [a['community_id'] for a in user_actions if a['action'] == 'skip']
-    
-    matches = []
-    
-    for community in all_communities:
-        # Skip if already joined
-        if current_user.user_id in community.get('members', []):
-            continue
-        
-        # Generate community profile text
-        comm_text = f"{community['name']}. {community['description']}. " + generate_profile_text(community['value_profile'], community.get('environment_settings'))
-        
-        # Get community embedding
-        comm_embedding = get_embedding(comm_text)
-        if not comm_embedding:
-            continue
-        
-        # Calculate cosine similarity using embeddings
-        similarity = cosine_similarity(user_embedding, comm_embedding)
-        base_score = similarity * 100  # Convert to 0-100 scale
-        
-        # Apply feedback loop adjustments
-        if community['community_id'] in skipped_communities:
-            base_score *= 0.7  # Reduce score for skipped communities
-        
-        # Generate match explanation
-        why_matches = "Your values align well with this community's focus. "
-        if current_user.value_profile.get('community_oriented', 0.5) > 0.5 and community['value_profile'].get('community_oriented', 0.5) > 0.5:
-            why_matches += "You both value strong community connections. "
-        if current_user.value_profile.get('intellectual', 0.5) > 0.5 and community['value_profile'].get('intellectual', 0.5) > 0.5:
-            why_matches += "Intellectual engagement is important to both. "
-        
-        friction = None
-        if abs(current_user.value_profile.get('structured', 0.5) - community['value_profile'].get('structured', 0.5)) > 0.4:
-            friction = "You may prefer different levels of structure and organization."
-        
-        matches.append(CommunityMatch(
-            community_id=community['community_id'],
-            community_name=community['name'],
-            description=community['description'],
-            image=community.get('image'),
-            compatibility_score=round(max(0, min(100, base_score)), 1),
-            why_it_matches=why_matches.strip(),
-            possible_friction=friction,
-            value_profile=community['value_profile'],
-            environment_settings=community['environment_settings'],
-            member_count=community.get('member_count', 0)
-        ))
-    
-    # Sort by compatibility score
-    matches.sort(key=lambda x: x.compatibility_score, reverse=True)
-    
-    return matches
+    # Use simple fallback matching (embeddings were causing timeout issues)
+    return await get_matches_fallback(current_user)
 
 async def get_matches_fallback(current_user: User):
     """Fallback matching without embeddings"""
