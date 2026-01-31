@@ -455,6 +455,7 @@ async def submit_game(submission: GameSubmission, current_user: User = Depends(g
         value_profile["competitive"] = value_counts["competitive"] / total_selections
         value_profile["intellectual"] = value_counts["intellectual"] / total_selections
         value_profile["tradition"] = value_counts["tradition"] / total_selections
+        value_profile["experiential"] = value_counts["experiential"] / total_selections
         
         # Determine social energy level
         community_score = value_counts["community_oriented"]
