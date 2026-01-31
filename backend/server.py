@@ -28,7 +28,7 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production')
 JWT_ALGORITHM = 'HS256'
 HUGGINGFACE_TOKEN = os.environ.get('HUGGINGFACE_TOKEN')
-HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/BAAI/bge-base-en-v1.5"
+HUGGINGFACE_API_URL = "https://router.huggingface.co/pipeline/feature-extraction/BAAI/bge-base-en-v1.5"
 
 # Create the main app
 app = FastAPI()
