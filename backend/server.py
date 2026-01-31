@@ -789,7 +789,7 @@ async def attend_event(event_id: str, current_user: User = Depends(get_current_u
 
 @api_router.post("/events/{event_id}/cancel")
 async def cancel_event_attendance(event_id: str, current_user: User = Depends(get_current_user)):
-    \"\"\"Cancel event attendance\"\"\"
+    """Cancel event attendance"""
     await db.events.update_one(
         {"event_id": event_id},
         {
