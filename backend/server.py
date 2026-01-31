@@ -707,7 +707,6 @@ async def get_matches(current_user: User = Depends(get_current_user)):
         {"_id": 0}
     ).to_list(1000)
     
-    joined_communities = [a['community_id'] for a in user_actions if a['action'] == 'join']
     skipped_communities = [a['community_id'] for a in user_actions if a['action'] == 'skip']
     
     matches = []
