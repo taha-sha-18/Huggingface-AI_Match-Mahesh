@@ -801,6 +801,153 @@ async def get_matches_fallback(current_user: User):
     matches.sort(key=lambda x: x.compatibility_score, reverse=True)
     return matches
 
+# ==================== EVENT ENDPOINTS ====================
+
+@api_router.get("/events")
+async def get_events(current_user: User = Depends(get_current_user)):
+    \"\"\"Get all events\"\"\"
+    events = await db.events.find({}, {"_id": 0}).to_list(1000)
+    return events
+
+@api_router.get("/events/{event_id}")
+async def get_event(event_id: str, current_user: User = Depends(get_current_user)):
+    \"\"\"Get event details\"\"\"
+    event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return event
+
+@api_router.post("/events")
+async def create_event(event: EventCreate, current_user: User = Depends(get_current_user)):
+    \"\"\"Create a new event\"\"\"
+    event_id = f"event_{uuid.uuid4().hex[:12]}"
+    
+    event_doc = {
+        "event_id": event_id,
+        "name": event.name,
+        "description": event.description,
+        "event_type": event.event_type,
+        "date": event.date,
+        "location": event.location,
+        "image": event.image,
+        "creator_id": current_user.user_id,
+        "created_at": datetime.now(timezone.utc),
+        "attendees": [current_user.user_id],
+        "attendee_count": 1,
+        "value_profile": event.value_profile,
+        "tags": event.tags
+    }
+    
+    await db.events.insert_one(event_doc)
+    return {"event_id": event_id, "message": "Event created successfully"}
+
+@api_router.post("/events/{event_id}/attend")
+async def attend_event(event_id: str, current_user: User = Depends(get_current_user)):
+    \"\"\"Attend an event\"\"\"
+    event = await db.events.find_one({"event_id": event_id}, {"_id": 0})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    if current_user.user_id in event['attendees']:
+        return {"message": "Already attending"}
+    
+    await db.events.update_one(
+        {"event_id": event_id},
+        {
+            "$push": {"attendees": current_user.user_id},
+            "$inc": {"attendee_count": 1}
+        }
+    )
+    return {"message": "Attending event"}
+
+@api_router.post("/events/{event_id}/cancel")
+async def cancel_event_attendance(event_id: str, current_user: User = Depends(get_current_user)):
+    \"\"\"Cancel event attendance\"\"\"
+    await db.events.update_one(
+        {"event_id": event_id},
+        {
+            "$pull": {"attendees": current_user.user_id},
+            "$inc": {"attendee_count": -1}
+        }
+    )
+    return {"message": "Attendance cancelled"}
+
+@api_router.get("/events/matches")
+async def get_event_matches(current_user: User = Depends(get_current_user)):
+    \"\"\"Get AI-matched events for user using HuggingFace embeddings\"\"\"
+    if not current_user.value_profile:
+        raise HTTPException(status_code=400, detail="Complete value discovery game first")
+    
+    # Generate user profile text for embedding
+    user_text = generate_profile_text(
+        current_user.value_profile,
+        current_user.environment_preferences
+    )
+    
+    # Get user embedding from HuggingFace
+    user_embedding = get_embedding(user_text)
+    if not user_embedding:
+        logger.warning("Could not get user embedding for events")
+        return []
+    
+    # Get all events
+    all_events = await db.events.find({}, {"_id": 0}).to_list(1000)
+    
+    matches = []
+    
+    for event in all_events:
+        # Skip past events
+        if event['date'] < datetime.now(timezone.utc):
+            continue
+        
+        # Skip if already attending
+        if current_user.user_id in event.get('attendees', []):
+            continue
+        
+        # Generate event profile text
+        event_text = f"{event['name']}. {event['description']}. {event['event_type']} event. " + generate_profile_text(event['value_profile'])
+        
+        # Get event embedding
+        event_embedding = get_embedding(event_text)
+        if not event_embedding:
+            continue
+        
+        # Calculate cosine similarity using embeddings
+        similarity = cosine_similarity(user_embedding, event_embedding)
+        base_score = similarity * 100  # Convert to 0-100 scale
+        
+        # Generate match explanation
+        why_matches = f"This {event['event_type']} event aligns with your interests and values. "
+        if current_user.value_profile.get('intellectual', 0.5) > 0.6 and event['value_profile'].get('intellectual', 0.5) > 0.6:
+            why_matches += "You'll enjoy the intellectual aspects. "
+        if current_user.value_profile.get('community_oriented', 0.5) > 0.6:
+            why_matches += "Great opportunity to connect with like-minded people. "
+        
+        friction = None
+        if abs(current_user.value_profile.get('competitive', 0.5) - event['value_profile'].get('competitive', 0.5)) > 0.5:
+            friction = "The competitive nature might not match your preferences."
+        
+        matches.append(EventMatch(
+            event_id=event['event_id'],
+            event_name=event['name'],
+            description=event['description'],
+            event_type=event['event_type'],
+            date=event['date'],
+            location=event['location'],
+            image=event.get('image'),
+            compatibility_score=round(max(0, min(100, base_score)), 1),
+            why_it_matches=why_matches.strip(),
+            possible_friction=friction,
+            value_profile=event['value_profile'],
+            attendee_count=event.get('attendee_count', 0),
+            tags=event.get('tags', [])
+        ))
+    
+    # Sort by compatibility score
+    matches.sort(key=lambda x: x.compatibility_score, reverse=True)
+    
+    return matches
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
