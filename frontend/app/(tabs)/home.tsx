@@ -127,7 +127,7 @@ export default function HomeScreen() {
                 {myCommunities.map((community) => (
                   <TouchableOpacity
                     key={community.community_id}
-                    style={styles.myCommu nityCard}
+                    style={styles.myCommunityCard}
                     onPress={() => Alert.alert(community.name, community.description)}
                   >
                     {community.image ? (
