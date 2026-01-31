@@ -1,0 +1,13 @@
+diff --git a/frontend/src/stores/communityStore.ts b/frontend/src/stores/communityStore.ts
+index 2fe8547..7750e70 100644
+--- a/frontend/src/stores/communityStore.ts
++++ b/frontend/src/stores/communityStore.ts
+@@ -5,7 +5,7 @@ import api from '../utils/api';
+ interface CommunityState {
+   communities: Community[];
+   matches: CommunityMatch[];
+-  myCommun ities: Community[];
++  myCommunities: Community[];
+   isLoading: boolean;
+   fetchCommunities: () => Promise<void>;
+   fetchMatches: () => Promise<void>;
