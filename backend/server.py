@@ -295,10 +295,11 @@ async def register(user_data: UserRegister):
     # Create JWT token
     token = create_access_token({"user_id": user_id, "email": user_data.email})
     
-    user_doc.pop('password_hash', None)
+    # Get user without _id for response
+    user_response = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
     
     return {
-        "user": user_doc,
+        "user": user_response,
         "token": token
     }
 
