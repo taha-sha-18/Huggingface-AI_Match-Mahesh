@@ -316,10 +316,11 @@ async def login(credentials: UserLogin):
     # Create JWT token
     token = create_access_token({"user_id": user_doc['user_id'], "email": user_doc['email']})
     
-    user_doc.pop('password_hash', None)
+    # Remove password hash from response
+    user_response = {k: v for k, v in user_doc.items() if k != 'password_hash'}
     
     return {
-        "user": user_doc,
+        "user": user_response,
         "token": token
     }
 
