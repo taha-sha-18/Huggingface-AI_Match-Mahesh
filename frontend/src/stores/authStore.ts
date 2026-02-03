@@ -55,6 +55,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await get().setToken(token);
       set({ user, isAuthenticated: true });
       await AsyncStorage.setItem('user_data', JSON.stringify(user));
+      
+      // Track signup completion
+      const { trackSignupComplete } = await import('../utils/analytics');
+      trackSignupComplete(user.user_id);
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Registration failed');
     }
