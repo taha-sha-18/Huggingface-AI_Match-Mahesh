@@ -207,6 +207,7 @@ function ArcButton({ button, index, isActive, onPress }: ArcButtonProps) {
         ]}
         onPress={onPress}
         activeOpacity={0.8}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <Ionicons name={button.icon} size={24} color="#FFF" />
       </TouchableOpacity>
