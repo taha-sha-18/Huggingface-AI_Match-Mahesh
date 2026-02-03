@@ -7,7 +7,7 @@ import FloatingArcMenu from '../../src/components/FloatingArcMenu';
 export default function TabsLayout() {
   return (
     <SafeAreaProvider>
-      <View style={styles.container} pointerEvents="box-none">
+      <View style={styles.container}>
         <Slot />
         <FloatingArcMenu />
       </View>
@@ -19,5 +19,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+    overflow: 'visible', // allow FAB to overflow
+    pointerEvents: 'box-none',
   },
 });
