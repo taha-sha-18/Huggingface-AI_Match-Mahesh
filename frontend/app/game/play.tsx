@@ -82,6 +82,11 @@ export default function GamePlayScreen() {
       await api.post('/api/game/submit', { selections: finalSelections });
       await refreshUser();
       
+      // Track profile completion
+      const { trackProfileCompleted, trackFirstCoreAction } = await import('../../src/utils/analytics');
+      trackProfileCompleted();
+      trackFirstCoreAction('game_completion');
+      
       Alert.alert(
         'Profile Created!',
         'Your value profile has been created. Let\'s find your perfect communities!',
