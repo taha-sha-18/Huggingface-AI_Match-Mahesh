@@ -223,13 +223,14 @@ const styles = StyleSheet.create({
   },
   arcContainer: {
     position: 'absolute',
-    right: 28,
     zIndex: 999,
+    overflow: 'visible',
   },
   arcButton: {
     position: 'absolute',
     right: 0,
     bottom: 0,
+    overflow: 'visible',
   },
   arcButtonInner: {
     width: 56,
@@ -249,8 +250,8 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    right: 24,
     zIndex: 1000,
+    overflow: 'visible',
   },
   fabButton: {
     width: 64,
