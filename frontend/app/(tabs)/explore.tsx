@@ -14,10 +14,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCommunityStore } from '../../src/stores/communityStore';
+import { useAuthStore } from '../../src/stores/authStore';
 import { Community } from '../../src/types';
 
 export default function ExploreScreen() {
   const { communities, myCommunities, fetchCommunities, fetchMyCommunities } = useCommunityStore();
+  const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -35,7 +37,41 @@ export default function ExploreScreen() {
     setRefreshing(false);
   };
 
-  const filteredCommunities = communities.filter((c) =>
+  // Calculate compatibility score between user and community
+  const getCompatibilityScore = (community: Community): number => {
+    if (!user?.value_profile) return 0;
+    
+    const userValues = user.value_profile;
+    const commValues = community.value_profile;
+    
+    const similarities: number[] = [];
+    for (const key in userValues) {
+      if (key in commValues) {
+        const diff = Math.abs(userValues[key as keyof typeof userValues] - commValues[key as keyof typeof commValues]);
+        similarities.push(1 - diff);
+      }
+    }
+    
+    return similarities.length > 0 ? (similarities.reduce((a, b) => a + b, 0) / similarities.length) * 100 : 0;
+  };
+
+  // Filter communities based on user's value profile
+  const getFilteredCommunities = () => {
+    if (!user?.game_completed) {
+      return communities; // Show all if game not completed
+    }
+
+    // Only show communities with compatibility > 40%
+    return communities
+      .map(community => ({
+        ...community,
+        compatibilityScore: getCompatibilityScore(community),
+      }))
+      .filter(c => c.compatibilityScore > 40)
+      .sort((a, b) => b.compatibilityScore - a.compatibilityScore);
+  };
+
+  const filteredCommunities = getFilteredCommunities().filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -51,7 +87,7 @@ export default function ExploreScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Explore</Text>
-          <Text style={styles.subtitle}>Discover new communities</Text>
+          <Text style={styles.subtitle}>Communities matched to your values</Text>
         </View>
 
         {/* Search Bar */}
@@ -85,8 +121,8 @@ export default function ExploreScreen() {
           {/* Stats */}
           <View style={styles.stats}>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{communities.length}</Text>
-              <Text style={styles.statLabel}>Communities</Text>
+              <Text style={styles.statValue}>{filteredCommunities.length}</Text>
+              <Text style={styles.statLabel}>Matched</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{myCommunities.length}</Text>
@@ -99,7 +135,7 @@ export default function ExploreScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="search" size={64} color="#374151" />
               <Text style={styles.emptyText}>
-                {searchQuery ? 'No communities found' : 'No communities available'}
+                {searchQuery ? 'No communities found' : user?.game_completed ? 'No matching communities available' : 'Complete the game to see matched communities'}
               </Text>
             </View>
           ) : (
@@ -109,6 +145,7 @@ export default function ExploreScreen() {
                   key={community.community_id}
                   community={community}
                   isJoined={isJoined(community.community_id)}
+                  compatibilityScore={(community as any).compatibilityScore}
                 />
               ))}
             </View>
@@ -119,7 +156,15 @@ export default function ExploreScreen() {
   );
 }
 
-function CommunityCard({ community, isJoined }: { community: Community; isJoined: boolean }) {
+function CommunityCard({ 
+  community, 
+  isJoined,
+  compatibilityScore 
+}: { 
+  community: Community; 
+  isJoined: boolean;
+  compatibilityScore?: number;
+}) {
   return (
     <TouchableOpacity style={styles.communityCard} activeOpacity={0.8}>
       {/* Image */}
@@ -134,7 +179,14 @@ function CommunityCard({ community, isJoined }: { community: Community; isJoined
         </LinearGradient>
       )}
 
-      {/* Badge */}
+      {/* Compatibility Badge */}
+      {compatibilityScore && compatibilityScore > 0 && (
+        <View style={styles.compatibilityBadge}>
+          <Text style={styles.compatibilityText}>{Math.round(compatibilityScore)}%</Text>
+        </View>
+      )}
+
+      {/* Joined Badge */}
       {isJoined && (
         <View style={styles.joinedBadge}>
           <Ionicons name="checkmark-circle" size={16} color="#10B981" />
