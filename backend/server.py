@@ -852,6 +852,70 @@ async def get_event_matches(current_user: User = Depends(get_current_user)):
     matches.sort(key=lambda x: x.compatibility_score, reverse=True)
     return matches
 
+# ==================== ANALYTICS ENDPOINTS ====================
+
+class AnalyticsEvent(BaseModel):
+    event_name: str
+    metadata: Optional[Dict[str, Any]] = {}
+
+@api_router.post("/analytics/track")
+async def track_event(event: AnalyticsEvent, request: Request):
+    """Track analytics event (non-blocking, fails silently)"""
+    try:
+        # Try to get user from auth, but don't require it
+        user_id = None
+        try:
+            current_user = await get_current_user(request)
+            user_id = current_user.user_id
+        except:
+            pass  # Anonymous user
+        
+        # Insert event
+        await db.events.insert_one({
+            "user_id": user_id,
+            "event_name": event.event_name,
+            "metadata": event.metadata,
+            "created_at": datetime.now(timezone.utc)
+        })
+        
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Analytics tracking error: {str(e)}")
+        # Fail silently - don't break user experience
+        return {"status": "ok"}
+
+@api_router.get("/analytics/stats")
+async def get_analytics_stats(current_user: User = Depends(get_current_user)):
+    """Get basic analytics stats (admin only for MVP)"""
+    try:
+        # Total users
+        total_users = await db.users.count_documents({})
+        
+        # Users who completed profile
+        completed_profiles = await db.users.count_documents({"game_completed": True})
+        
+        # Total events
+        total_events = await db.events.count_documents({})
+        
+        # Activation rate (users with first_core_action)
+        first_core_actions = await db.events.count_documents({"event_name": "first_core_action"})
+        activation_rate = (first_core_actions / total_users * 100) if total_users > 0 else 0
+        
+        # Recent events (last 24 hours)
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        recent_events = await db.events.count_documents({"created_at": {"$gte": yesterday}})
+        
+        return {
+            "total_users": total_users,
+            "completed_profiles": completed_profiles,
+            "total_events": total_events,
+            "activation_rate": round(activation_rate, 2),
+            "recent_events_24h": recent_events
+        }
+    except Exception as e:
+        logger.error(f"Analytics stats error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch analytics")
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/")
