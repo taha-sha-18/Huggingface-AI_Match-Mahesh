@@ -148,10 +148,10 @@ function ArcButton({ button, index, isActive, onPress }: ArcButtonProps) {
   const translateY = useSharedValue(0);
 
   useEffect(() => {
-    // Calculate arc positions
-    const radius = 120;
-    const angleStep = 22; // Degrees between buttons
-    const startAngle = 70; // Starting angle (top-left)
+    // Calculate arc positions - reduced radius to keep on screen
+    const radius = 110;
+    const angleStep = 20; // Degrees between buttons
+    const startAngle = 75; // Starting angle (upward-left)
     const angle = startAngle + index * angleStep;
     const radian = (angle * Math.PI) / 180;
 
