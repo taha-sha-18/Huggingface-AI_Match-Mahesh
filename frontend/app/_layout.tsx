@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter, Slot } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
+import { initAnalytics } from '../src/utils/analytics';
 
 export default function RootLayout() {
   const { isLoading, isAuthenticated, loadUser } = useAuthStore();
@@ -9,6 +10,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     loadUser();
+    // Initialize analytics on app start
+    initAnalytics();
   }, []);
 
   useEffect(() => {
