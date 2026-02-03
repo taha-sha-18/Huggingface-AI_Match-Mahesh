@@ -64,6 +64,11 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       await api.post(`/api/communities/${communityId}/join`);
       await get().fetchMyCommunities();
       await get().fetchMatches();
+      
+      // Track join as core action
+      const { trackJoinCommunity, trackFirstCoreAction } = await import('../utils/analytics');
+      trackJoinCommunity(communityId);
+      trackFirstCoreAction('join_community', { community_id: communityId });
     } catch (error) {
       console.error('Join community error:', error);
       throw error;
