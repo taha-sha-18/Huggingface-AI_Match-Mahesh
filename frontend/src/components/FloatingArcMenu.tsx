@@ -91,13 +91,13 @@ export default function FloatingArcMenu() {
   return (
     <>
       {/* Dimmed Overlay */}
-      <Animated.View style={[styles.overlay, overlayAnimatedStyle]}>
+      <Animated.View style={[styles.overlay, overlayAnimatedStyle]} pointerEvents={isOpen ? 'auto' : 'none'}>
         <Pressable style={StyleSheet.absoluteFill} onPress={toggleMenu} />
       </Animated.View>
 
       {/* Arc Menu Buttons */}
       {isOpen && (
-        <View style={[styles.arcContainer, { bottom: insets.bottom + 108, right: 20 }]}>
+        <View style={[styles.arcContainer, { bottom: insets.bottom + 124, right: 24 }]} pointerEvents="box-none">
           {MENU_BUTTONS.map((button, index) => (
             <ArcButton
               key={button.route}
@@ -111,25 +111,27 @@ export default function FloatingArcMenu() {
       )}
 
       {/* Main FAB */}
-      <Animated.View
+      <View
         style={[
-          styles.fab,
-          fabAnimatedStyle,
-          { bottom: insets.bottom + 40, right: 20 },
+          styles.fabContainer,
+          { bottom: insets.bottom + 56, right: 24 },
         ]}
+        pointerEvents="box-none"
       >
-        <TouchableOpacity
-          style={styles.fabButton}
-          onPress={toggleMenu}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={isOpen ? 'close' : 'menu'}
-            size={28}
-            color="#FFF"
-          />
-        </TouchableOpacity>
-      </Animated.View>
+        <Animated.View style={fabAnimatedStyle}>
+          <TouchableOpacity
+            style={styles.fabButton}
+            onPress={toggleMenu}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={isOpen ? 'close' : 'menu'}
+              size={28}
+              color="#FFF"
+            />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
     </>
   );
 }
