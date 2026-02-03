@@ -47,7 +47,7 @@ export default function RegisterScreen() {
     try {
       setIsLoading(true);
       await register(email.toLowerCase().trim(), password, name.trim());
-      // After registration, redirect to game
+      // User is now logged in, go directly to game
       router.replace('/game/intro');
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message);
