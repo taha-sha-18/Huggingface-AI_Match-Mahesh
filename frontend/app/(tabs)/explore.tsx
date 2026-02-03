@@ -311,6 +311,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  compatibilityBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  compatibilityText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFF',
+  },
   joinedBadge: {
     position: 'absolute',
     top: 12,
