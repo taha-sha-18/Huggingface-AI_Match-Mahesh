@@ -97,7 +97,7 @@ export default function FloatingArcMenu() {
 
       {/* Arc Menu Buttons */}
       {isOpen && (
-        <View style={[styles.arcContainer, { bottom: insets.bottom + 100 }]}>
+        <View style={[styles.arcContainer, { bottom: insets.bottom + 108, right: 20 }]}>
           {MENU_BUTTONS.map((button, index) => (
             <ArcButton
               key={button.route}
@@ -115,7 +115,7 @@ export default function FloatingArcMenu() {
         style={[
           styles.fab,
           fabAnimatedStyle,
-          { bottom: insets.bottom + 32 },
+          { bottom: insets.bottom + 40, right: 20 },
         ]}
       >
         <TouchableOpacity
