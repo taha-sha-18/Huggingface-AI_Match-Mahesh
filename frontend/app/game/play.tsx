@@ -47,6 +47,9 @@ export default function GamePlayScreen() {
     const newSelections = [...selections, { round: currentRound, word }];
     setSelections(newSelections);
 
+    // Check if this is the last round (round 7 = 8th round)
+    const isLastRound = currentRound >= GAME_TILES.length - 1;
+
     // Animate transition
     Animated.sequence([
       Animated.timing(fadeAnim, {
@@ -63,12 +66,12 @@ export default function GamePlayScreen() {
 
     // Move to next round or submit
     setTimeout(() => {
-      if (currentRound < GAME_TILES.length - 1) {
-        setCurrentRound(currentRound + 1);
-        setSelectedTile(null);
-      } else {
+      if (isLastRound) {
         // Game complete, submit
         submitGame(newSelections);
+      } else {
+        setCurrentRound(currentRound + 1);
+        setSelectedTile(null);
       }
     }, 400);
   };
