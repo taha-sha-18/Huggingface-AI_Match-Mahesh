@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 import os
 
-mongo_ui_router = APIRouter(prefix="/mongo-ui")
+mongo_ui_router = APIRouter(prefix="/api/mongo-ui")
 
 @mongo_ui_router.get("/", response_class=HTMLResponse)
 async def mongo_ui():
