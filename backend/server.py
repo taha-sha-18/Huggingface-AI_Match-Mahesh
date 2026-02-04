@@ -936,6 +936,10 @@ app.include_router(api_router)
 from mongo_ui import mongo_ui_router
 app.include_router(mongo_ui_router)
 
+# Include MongoDB Proxy router
+from mongo_proxy import mongo_proxy_router
+app.include_router(mongo_proxy_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
