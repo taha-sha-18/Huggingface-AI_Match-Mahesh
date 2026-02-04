@@ -6,7 +6,7 @@ Additional Backend Tests for Edge Cases
 import requests
 import json
 
-BASE_URL = "https://huggingface-key.preview.emergentagent.com/api"
+BASE_URL = "https://embed-match.preview.emergentagent.com/api"
 
 def test_specific_scenarios():
     """Test specific edge cases"""
