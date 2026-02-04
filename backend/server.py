@@ -932,6 +932,10 @@ async def health_check():
 # Include router
 app.include_router(api_router)
 
+# Include MongoDB UI router
+from mongo_ui import mongo_ui_router
+app.include_router(mongo_ui_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
