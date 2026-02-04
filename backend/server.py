@@ -732,8 +732,8 @@ async def get_matches_fallback(current_user: User):
 
 @api_router.get("/events")
 async def get_events(current_user: User = Depends(get_current_user)):
-    """Get all events"""
-    events = await db.events.find({}, {"_id": 0}).to_list(1000)
+    """Get all events (optimized with limit)"""
+    events = await db.events.find({}, {"_id": 0}).limit(50).to_list(50)
     return events
 
 @api_router.get("/events/{event_id}")
