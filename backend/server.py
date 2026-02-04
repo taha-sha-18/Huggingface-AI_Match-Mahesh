@@ -940,6 +940,10 @@ app.include_router(mongo_ui_router)
 from mongo_proxy import mongo_proxy_router
 app.include_router(mongo_proxy_router)
 
+# Include MongoDB Admin Interface
+from db_admin import db_admin_router
+app.include_router(db_admin_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
