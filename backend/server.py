@@ -690,8 +690,8 @@ async def get_matches(current_user: User = Depends(get_current_user)):
 
 async def get_matches_fallback(current_user: User):
     """Fallback matching without embeddings"""
-    all_communities = await db.communities.find({}, {"_id": 0}).to_list(1000)
-    user_actions = await db.user_actions.find({"user_id": current_user.user_id}, {"_id": 0}).to_list(1000)
+    all_communities = await db.communities.find({}, {"_id": 0}).limit(100).to_list(100)
+    user_actions = await db.user_actions.find({"user_id": current_user.user_id}, {"_id": 0}).limit(100).to_list(100)
     skipped_communities = [a['community_id'] for a in user_actions if a['action'] == 'skip']
     
     matches = []
