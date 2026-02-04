@@ -566,8 +566,8 @@ async def create_community(community: CommunityCreate, current_user: User = Depe
 
 @api_router.get("/communities")
 async def get_communities(current_user: User = Depends(get_current_user)):
-    """Get all communities"""
-    communities = await db.communities.find({}, {"_id": 0}).to_list(1000)
+    """Get all communities (optimized with limit)"""
+    communities = await db.communities.find({}, {"_id": 0}).limit(100).to_list(100)
     return communities
 
 @api_router.get("/communities/{community_id}")
