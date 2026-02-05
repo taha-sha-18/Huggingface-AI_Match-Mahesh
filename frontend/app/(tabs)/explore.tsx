@@ -21,6 +21,7 @@ import { Community } from '../../src/types';
 export default function ExploreScreen() {
   const { communities, myCommunities, fetchCommunities, fetchMyCommunities } = useCommunityStore();
   const { user } = useAuthStore();
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
