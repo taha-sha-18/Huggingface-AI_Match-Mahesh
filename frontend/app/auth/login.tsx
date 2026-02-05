@@ -132,6 +132,14 @@ export default function LoginScreen() {
                   <Text style={styles.linkText}>Sign Up</Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Debug Link - Useful for diagnosing network issues */}
+              <TouchableOpacity 
+                style={styles.debugLink}
+                onPress={() => router.push('/debug')}
+              >
+                <Text style={styles.debugLinkText}>🔧 Network Debug</Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
