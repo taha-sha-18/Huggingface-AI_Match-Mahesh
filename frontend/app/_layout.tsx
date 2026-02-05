@@ -1,37 +1,44 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useRouter, Slot, usePathname } from 'expo-router';
+import { useRouter, Slot, useSegments, usePathname } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import { initAnalytics } from '../src/utils/analytics';
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ['/debug', '/auth/welcome', '/auth/login', '/auth/register'];
+const PUBLIC_ROUTES = ['debug', 'auth'];
 
 export default function RootLayout() {
   const { isLoading, isAuthenticated, loadUser } = useAuthStore();
   const router = useRouter();
+  const segments = useSegments();
   const pathname = usePathname();
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   useEffect(() => {
-    loadUser();
+    loadUser().finally(() => setInitialLoadDone(true));
     // Initialize analytics on app start
     initAnalytics();
   }, []);
 
   useEffect(() => {
-    // Skip redirect for public routes
-    const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+    if (!initialLoadDone) return;
     
-    if (!isLoading && !isPublicRoute) {
-      if (!isAuthenticated) {
-        router.replace('/auth/welcome');
-      } else {
-        router.replace('/(tabs)/home');
-      }
+    // Get the first segment of the path
+    const firstSegment = segments[0];
+    
+    // Check if current route is public
+    const isPublicRoute = PUBLIC_ROUTES.includes(firstSegment as string);
+    
+    // Don't redirect if on a public route
+    if (isPublicRoute) return;
+    
+    // Only redirect from index/root
+    if (!isAuthenticated && (pathname === '/' || !firstSegment)) {
+      router.replace('/auth/welcome');
     }
-  }, [isLoading, isAuthenticated, pathname]);
+  }, [initialLoadDone, isAuthenticated, segments, pathname]);
 
-  if (isLoading) {
+  if (isLoading || !initialLoadDone) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#6366F1" />
