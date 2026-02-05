@@ -252,4 +252,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  debugLink: {
+    alignItems: 'center',
+    marginTop: 24,
+    padding: 12,
+  },
+  debugLinkText: {
+    color: '#6B7280',
+    fontSize: 13,
+  },
 });
