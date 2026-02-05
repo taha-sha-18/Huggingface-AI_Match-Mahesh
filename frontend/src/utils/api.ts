@@ -55,13 +55,31 @@ api.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Log outgoing requests in development
+  console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
 
 // Handle response errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API] Response ${response.status} from ${response.config.url}`);
+    return response;
+  },
   async (error) => {
+    // Detailed error logging for debugging
+    console.error('[API] Request failed:', {
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      method: error.config?.method,
+      status: error.response?.status,
+      message: error.message,
+      code: error.code,
+      // Network error specifics
+      isNetworkError: !error.response,
+      isTimeout: error.code === 'ECONNABORTED',
+    });
+    
     if (error.response?.status === 401) {
       // Clear auth data on 401
       await AsyncStorage.removeItem('auth_token');
@@ -70,5 +88,12 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Export backend URL for debugging purposes
+export const getApiConfig = () => ({
+  backendUrl: BACKEND_URL,
+  platform: Platform.OS,
+  isExpoGo: Constants.appOwnership === 'expo',
+});
 
 export default api;
