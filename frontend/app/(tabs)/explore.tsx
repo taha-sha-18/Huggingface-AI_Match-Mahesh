@@ -162,14 +162,16 @@ export default function ExploreScreen() {
 function CommunityCard({ 
   community, 
   isJoined,
-  compatibilityScore 
+  compatibilityScore,
+  onPress,
 }: { 
   community: Community; 
   isJoined: boolean;
   compatibilityScore?: number;
+  onPress: () => void;
 }) {
   return (
-    <TouchableOpacity style={styles.communityCard} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.communityCard} activeOpacity={0.8} onPress={onPress}>
       {/* Image */}
       {community.image ? (
         <Image source={{ uri: community.image }} style={styles.communityImage} />
