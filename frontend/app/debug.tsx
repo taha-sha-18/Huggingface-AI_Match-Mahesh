@@ -170,15 +170,16 @@ export default function DebugScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Network Debug</Text>
-      </View>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Network Debug</Text>
+        </View>
 
-      <ScrollView style={styles.content}>
+        <ScrollView style={styles.content}>
         {/* Configuration Info */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Configuration</Text>
