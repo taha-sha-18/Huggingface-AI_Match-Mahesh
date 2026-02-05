@@ -944,6 +944,22 @@ app.include_router(mongo_proxy_router)
 from db_admin import db_admin_router
 app.include_router(db_admin_router)
 
+# Root route for health checks and load balancer probes
+@app.get("/")
+async def root():
+    """Root endpoint for health checks and load balancer probes"""
+    return {
+        "status": "healthy",
+        "service": "AI Community Matching API",
+        "version": "1.0.1"
+    }
+
+# Favicon route to prevent 404s
+@app.get("/favicon.ico")
+async def favicon():
+    """Return empty response for favicon requests"""
+    return Response(content="", media_type="image/x-icon")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
