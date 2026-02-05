@@ -148,6 +148,7 @@ export default function ExploreScreen() {
                   community={community}
                   isJoined={isJoined(community.community_id)}
                   compatibilityScore={(community as any).compatibilityScore}
+                  onPress={() => router.push(`/communities/${community.community_id}`)}
                 />
               ))}
             </View>
