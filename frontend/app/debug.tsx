@@ -257,6 +257,7 @@ export default function DebugScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
